@@ -3,13 +3,25 @@
 <head>
     <title>Game</title>
     <link rel="stylesheet" type="text/css" href="style.css">
-    <script src="player.js"></script>
     <script src="game.js"></script>
 </head>
 <body>
+    <script type="text/javascript">
+        var DOG = DOG || {};
+        DOG.commmonMethods = {
+            bark:"woof",
+            bite:"ow",
+            goWalk: function(){
+              bark = "hey";
+
+            }
+        };
+        DOG.commmonMethods.bark = "Hey";
+        console.log(DOG.commmonMethods.bark);
+    </script>
     <h1>An HTML5 Canvas Game</h1>
     <canvas id="game">
-        <p id="nocanvas">You appear to not be able to see the game>
+        <p id="nocanvas">You appear to not be able to see the game.</p>
     </canvas>
 </body>
 </html>
