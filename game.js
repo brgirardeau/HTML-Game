@@ -10,7 +10,7 @@ window.onload = function(){
 
   var keysDown = {};
 
-  var player = new Player(canvas.width/2, canvas.height - 10);
+  var player = new Player(0, canvas.height - 10);
 
   //handles animation of each frame
   var animate = window.requestAnimationFrame ||
@@ -25,50 +25,34 @@ window.onload = function(){
     this.width = 10;
     this.height = 10;
     this.maxSpeed = 10;
-    this.maxHeight = 5;
+    this.maxHeight = 6;
     this.velocityX = 0;
     this.velocityY = 0;
-    this.friction = .85;
+    this.friction = .9;
     this.gravity = .5;
   }
 
   //update the state of the player
   Player.prototype.update = function(){
-      for (var key in keysDown) {
-        var value = Number(key);
-        //left
-        if (value == 37) {
-          if(this.velocityX > -this.maxSpeed){
-            this.velocityX -= 2;
-          }
-        }
-        //right
-        else if (value == 39) {
-          if(this.velocityX < this.maxSpeed){
-            this.velocityX += 2;
-          }
-        }
-        //up
-        else if (value == 32) {
-          if(!this.jumping){
-            this.jumping = true;
-            this.velocityY = -this.maxHeight * 2;
-          }
-        }
-    }
-    console.log(this.velocityX);
+
+    //make player move based off of key strokes
+    this.interpretInputs();
+
     //cause player to skid to stop
     this.velocityX *= this.friction;
 
     //implement gravity
     this.velocityY += this.gravity;
 
+    //console.log(this.velocityX);
+
     this.y += this.velocityY;
     this.x += this.velocityX;
 
-    //check collision with edges
-    if (this.x >= width-this.width) {
-      this.x = width-this.width;
+    //check collision with edges (this will go away when we
+    //properly do collisions
+    if (this.x >= canvas.width-this.width) {
+      this.x = canvas.width-this.width;
     }
     else if (player.x <= 0) {
       player.x = 0;
@@ -76,6 +60,33 @@ window.onload = function(){
     if(this.y >= height-this.height){
       this.y = height - this.height;
       this.jumping = false;
+    }
+//    ctx.translate(-this.velocityX, 0);
+
+  };
+
+  Player.prototype.interpretInputs = function(){
+    for (var key in keysDown) {
+      var value = Number(key);
+      //left
+      if (value == 37) {
+        if(this.velocityX > -this.maxSpeed){
+          this.velocityX -= 1;
+        }
+      }
+      //right
+      else if (value == 39) {
+        if(this.velocityX < this.maxSpeed){
+          this.velocityX += 1;
+        }
+      }
+      //up
+      else if (value == 32) {
+        if(!this.jumping){
+          this.jumping = true;
+          this.velocityY = -this.maxHeight * 2;
+        }
+      }
     }
   };
 
@@ -87,7 +98,14 @@ window.onload = function(){
 
   //draw everything to the canvas
   var render = function() {
-    ctx.clearRect(0,0,canvas.height, canvas.width);
+    //when the player is at the center of the screen and is moving right or left they should stay in the center of the screen
+    //and the background should move with them.
+    ctx.fillStyle = "blue";
+    ctx.fillRect(0,0,500,500);
+    ctx.fillStyle = "green";
+    ctx.fillRect(500,0, 500,500);
+    ctx.fillStyle = "red";
+    ctx.fillRect(1000,0,500,500);
     player.render();
   };
 
