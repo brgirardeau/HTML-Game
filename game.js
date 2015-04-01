@@ -1,5 +1,5 @@
 window.onload = function(){
-  var width = 500;
+  var width = 1000;
   var height = 500;
 
   var canvas = document.getElementById("game");
@@ -10,6 +10,7 @@ window.onload = function(){
 
   var keysDown = {};
   var levels = [level1, level2, level3, level4, level5];
+  var levelWidth = 1500;
 
   var player = new Player(0, canvas.height - 10);
   var camera = new Camera();
@@ -29,12 +30,14 @@ window.onload = function(){
   }
 
   Camera.prototype.update = function(char){
-    this.x += char.velocityX;
+    if(char.x >= this.width/2 - char.width/2 - char.maxSpeed && char.x <= this.width/2 - char.width/2 + char.maxSpeed){
+      this.x += char.velocityX;
+    }
     if(this.x < 0){
       this.x = 0;
     }
-    if(this.x > 1000){
-      this.x = 1000;
+    if(this.x > levelWidth - this.width){
+      this.x = levelWidth - this.width;
     }
   };
 
@@ -44,12 +47,12 @@ window.onload = function(){
     this.jumping = false;
     this.width = 10;
     this.height = 10;
-    this.maxSpeed = 10;
+    this.maxSpeed = 7;
     this.maxHeight = 6;
     this.velocityX = 0;
     this.velocityY = 0;
     this.friction = .9;
-    this.gravity = .5;
+    this.gravity = .6;
   }
 
   //update the state of the player
@@ -67,31 +70,26 @@ window.onload = function(){
     //console.log(this.velocityX);
 
     this.y += this.velocityY;
-    this.x += this.velocityX;
 
     //check collision with edges (this will go away when we
     //properly do collisions
     //when the player is at the center of the screen and is moving right or left they should stay in the center of the screen
     //and the background should move with them.
-    if(this.velocityX > 0){
-      if(cam.x >= 1000){
-        if(this.x >= canvas.width-this.width){
-          this.x = canvas.width - this.width;
-        }
-      }
-      else if(this.x >= canvas.width/2 - this.width/2){
-        this.x = canvas.width/2-this.width/2;
+    if(cam.x == 0){
+      if(this.x + this.velocityX >= 0){
+        this.x += this.velocityX;
       }
     }
-    else if(this.velocityX < 0){
-      if(!cam.x <= 0){
-        if(this.x <= canvas.width/2 - this.width/2){
-          this.x = canvas.width/2 - this.width/2;
-        }
+    if(cam.x == levelWidth - cam.width){
+      if(this.x + this.velocityX <= 1000 - this.width){
+        this.x += this.velocityX;
       }
     }
-    if (this.x <= 0){
+    if(this.x <= 0){
       this.x = 0;
+    }
+    if(this.x >= canvas.width - this.width){
+      this.x = canvas.width  - this.width;
     }
     if(this.y >= height-this.height){
       this.y = height - this.height;
