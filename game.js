@@ -9,6 +9,7 @@ window.onload = function(){
   canvas.height = height;
 
   var keysDown = {};
+  var objectsInLevel = [];
   var levels = [level1];
   var currentLevel = 0;
   var colWidth = 50;
@@ -135,19 +136,17 @@ window.onload = function(){
       this.y = height - this.height;
       this.jumping = false;
     }
+
+    this.checkCollisions(objectsInLevel);
   };
 
-  Player.prototype.checkcollision = function(objects){
+  Player.prototype.checkCollisions = function(objects){
     for(var obj in objects){
-      if(this.x+this.width+this.velocityX>obj.x){
-        if(this.x+this.velocityX<obj.x+obj.width){
-          if(this.y+this.velocityY+this.height>obj.y){
-            if(this.y+this.velocityY<obj.y+obj.height){
-              this.x=obs.x-this.width;
-              console.log("collides");
-            }
-          }
-        }
+      if(this.x + this.width + this.velocityX > obj.x &&
+         this.x + this.velocityX < obj.x + obj.width &&
+         this.y + this.velocityY + this.height > obj.y &&
+         this.y + this.velocityY < obj.y + obj.height){
+        console.log(obj);
       }
     }
   };
@@ -192,14 +191,16 @@ window.onload = function(){
           actually filling in rects. Once we have our obstacle objects
           up and running this should be calling the obstacle.prototype.render
           method*/
-<<<<<<< HEAD
+
   var renderLevel = function(levels, currentLevel){
+    objectsInLevel = [];
     for(var i = 0; i < levels[currentLevel].layout.length; i++){
       for(var j = 0; j < levels[currentLevel].layout[i].length; j++){
         switch(levels[currentLevel].layout[i][j]){
           case 1:
             var wall = new Obstacle(50 * j - camera.x, 50*i, 50, 50);
             wall.render();
+            objectsInLevel.push(wall);
             break;
           case 0:
             break;
