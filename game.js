@@ -83,6 +83,18 @@ window.onload = function(){
     this.gravity = .6;
   }
 
+  function Obstacle(x, y, wid, height){
+   this.x=x;
+    this.y=y;
+    this.width=wid;
+    this.height=height;
+  }
+
+  Obstacle.prototype.render = function(){
+    ctx.fillStyle = "red";
+    ctx.fillRect(this.x, this.y, this.width, this.height);
+  };
+
   //update the state of the player
   Player.prototype.update = function(cam){
 
@@ -122,6 +134,21 @@ window.onload = function(){
     if(this.y >= height-this.height){
       this.y = height - this.height;
       this.jumping = false;
+    }
+  };
+
+  Player.prototype.checkcollision = function(objects){
+    for(var obj in objects){
+      if(this.x+this.width+this.velocityX>obj.x){
+        if(this.x+this.velocityX<obj.x+obj.width){
+          if(this.y+this.velocityY+this.height>obj.y){
+            if(this.y+this.velocityY<obj.y+obj.height){
+              this.x=obs.x-this.width;
+              console.log("collides");
+            }
+          }
+        }
+      }
     }
   };
 
@@ -165,18 +192,14 @@ window.onload = function(){
           actually filling in rects. Once we have our obstacle objects
           up and running this should be calling the obstacle.prototype.render
           method*/
+<<<<<<< HEAD
   var renderLevel = function(levels, currentLevel){
     for(var i = 0; i < levels[currentLevel].layout.length; i++){
       for(var j = 0; j < levels[currentLevel].layout[i].length; j++){
         switch(levels[currentLevel].layout[i][j]){
           case 1:
-            if(j % 2 == 0){
-              ctx.fillStyle = "green";
-            }
-            else {
-              ctx.fillStyle = "blue";
-            }
-            ctx.fillRect(50 * j - camera.x, 50 * i, 50, 50);
+            var wall = new Obstacle(50 * j - camera.x, 50*i, 50, 50);
+            wall.render();
             break;
           case 0:
             break;
