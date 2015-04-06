@@ -9,10 +9,12 @@ window.onload = function(){
   canvas.height = height;
 
   var keysDown = {};
-  var levels = [level1, level2, level3, level4, level5];
-  var levelWidth = 1500;
+  var levels = [level1];
+  var currentLevel = 0;
+  var colWidth = 50;
+  var levelWidth = 2000;
 
-  var player = new Player(0, canvas.height - 10);
+  var player = new Player(levels[currentLevel].spawnX, levels[currentLevel].spawnY);
   var camera = new Camera();
 
   //handles animation of each frame
@@ -20,6 +22,32 @@ window.onload = function(){
     window.webkitRequestAnimationFrame ||
     window.mozRequestAnimationFrame ||
     function(callback) { window.setTimeout(callback, 1000/60) };
+
+  function roundRect(x, y, width, height, radius, fill, stroke) {
+    if (typeof stroke == "undefined" ) {
+      stroke = true;
+    }
+    if (typeof radius === "undefined") {
+      radius = 5;
+    }
+    ctx.beginPath();
+    ctx.moveTo(x + radius, y);
+    ctx.lineTo(x + width - radius, y);
+    ctx.quadraticCurveTo(x + width, y, x + width, y + radius);
+    ctx.lineTo(x + width, y + height - radius);
+    ctx.quadraticCurveTo(x + width, y + height, x + width - radius, y + height);
+    ctx.lineTo(x + radius, y + height);
+    ctx.quadraticCurveTo(x, y + height, x, y + height - radius);
+    ctx.lineTo(x, y + radius);
+    ctx.quadraticCurveTo(x, y, x + radius, y);
+    ctx.closePath();
+    if (stroke) {
+      ctx.stroke();
+    }
+    if (fill) {
+      ctx.fill();
+    }
+  }
 
   //viewport
   function Camera(){
@@ -36,8 +64,8 @@ window.onload = function(){
     if(this.x < 0){
       this.x = 0;
     }
-    if(this.x > levelWidth - this.width){
-      this.x = levelWidth - this.width;
+    if(this.x > levels[currentLevel].cols * colWidth - this.width){
+      this.x = levels[currentLevel].cols * colWidth - this.width;
     }
   };
 
@@ -45,8 +73,8 @@ window.onload = function(){
     this.x = x;
     this.y = y;
     this.jumping = false;
-    this.width = 10;
-    this.height = 10;
+    this.width = 30;
+    this.height = 30;
     this.maxSpeed = 7;
     this.maxHeight = 6;
     this.velocityX = 0;
@@ -80,7 +108,7 @@ window.onload = function(){
         this.x += this.velocityX;
       }
     }
-    if(cam.x == levelWidth - cam.width){
+    if(cam.x == levels[currentLevel].cols * colWidth - cam.width){
       if(this.x + this.velocityX <= 1000 - this.width){
         this.x += this.velocityX;
       }
@@ -125,7 +153,12 @@ window.onload = function(){
   //draw the player to the canvas
   Player.prototype.render = function(){
     ctx.fillStyle = "#000000";
-    ctx.fillRect(this.x, this.y, this.width, this.height);
+    roundRect(this.x, this.y, this.width, this.height, 10, true, false);
+    ctx.fillStyle = "white";
+    roundRect(this.x + 2, this.y + 2, this.width - 4, this.height - 4, 10, true, false);
+    ctx.fillStyle = "#000000";
+    roundRect(this.x + 3, this.y + 3, this.width - 6, this.height - 6, 10, true, false);
+
   };
 
   /*TODO: this should really just be rendering objects instead of
@@ -133,9 +166,9 @@ window.onload = function(){
           up and running this should be calling the obstacle.prototype.render
           method*/
   var renderLevel = function(levels, currentLevel){
-    for(var i = 0; i < levels[currentLevel].length; i++){
-      for(var j = 0; j < levels[currentLevel][i].length; j++){
-        switch(levels[currentLevel][i][j]){
+    for(var i = 0; i < levels[currentLevel].layout.length; i++){
+      for(var j = 0; j < levels[currentLevel].layout[i].length; j++){
+        switch(levels[currentLevel].layout[i][j]){
           case 1:
             if(j % 2 == 0){
               ctx.fillStyle = "green";
@@ -143,7 +176,7 @@ window.onload = function(){
             else {
               ctx.fillStyle = "blue";
             }
-            ctx.fillRect(300 * j - camera.x, 100 * i, 300, 100);
+            ctx.fillRect(50 * j - camera.x, 50 * i, 50, 50);
             break;
           case 0:
             break;
