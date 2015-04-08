@@ -84,10 +84,10 @@ window.onload = function(){
     this.gravity = .6;
   }
 
-  function Obstacle(x, y, wid, height){
-   this.x=x;
+  function Obstacle(x, y, width, height){
+    this.x=x;
     this.y=y;
-    this.width=wid;
+    this.width=width;
     this.height=height;
   }
 
@@ -136,18 +136,38 @@ window.onload = function(){
       this.y = height - this.height;
       this.jumping = false;
     }
-
     this.checkCollisions(objectsInLevel);
   };
 
   Player.prototype.checkCollisions = function(objects){
-    for(var obj in objects){
-      if(this.x + this.width + this.velocityX > obj.x &&
-         this.x + this.velocityX < obj.x + obj.width &&
-         this.y + this.velocityY + this.height > obj.y &&
-         this.y + this.velocityY < obj.y + obj.height){
-        console.log(obj);
+    var x = this.x;
+    var width = this. width;
+    var y = this.y;
+    var height = this.height;
+    var velocityX = this.velocityX;
+    var velocityY = this.velocityY;
+    var positionX;
+    var positionY;
+    objects.forEach(function(obj){
+      //left
+      if(x + width + velocityX > obj.x &&
+         x + velocityX < obj.x + obj.width &&
+         y + velocityY + height > obj.y &&
+         y + velocityY < obj.y + obj.height){
+        positionX = obj.x - width;
+        positionY = y;
       }
+      //right
+
+      //top
+
+      //bottom
+    });
+    if(positionX){
+      this.x = positionX;
+    }
+    if(positionY){
+      this.y = positionY;
     }
   };
 
