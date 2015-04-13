@@ -18,12 +18,6 @@ window.onload = function(){
   var player = new Player(levels[currentLevel].spawnX, levels[currentLevel].spawnY);
   var camera = new Camera();
 
-  //handles animation of each frame
-  var animate = window.requestAnimationFrame ||
-    window.webkitRequestAnimationFrame ||
-    window.mozRequestAnimationFrame ||
-    function(callback) { window.setTimeout(callback, 1000/60) };
-
   function roundRect(x, y, width, height, radius, fill, stroke) {
     if (typeof stroke == "undefined" ) {
       stroke = true;
@@ -139,29 +133,17 @@ window.onload = function(){
     this.checkCollisions(objectsInLevel);
   };
 
+  //check collisions with array of objects in the level and
+  //adjust position accordingly
   Player.prototype.checkCollisions = function(objects){
-    var x = this.x;
-    var width = this. width;
-    var y = this.y;
-    var height = this.height;
-    var velocityX = this.velocityX;
-    var velocityY = this.velocityY;
+    var play = this;
     var positionX;
     var positionY;
     objects.forEach(function(obj){
-      //left
-      if(x + width + velocityX > obj.x &&
-         x + velocityX < obj.x + obj.width &&
-         y + velocityY + height > obj.y &&
-         y + velocityY < obj.y + obj.height){
-        positionX = obj.x - width;
-        positionY = y;
-      }
-      //right
-
-      //top
-
-      //bottom
+      //is colliding if true
+      if(collides(play, obj.x, obj.y, obj.width, obj.height)){
+        console.log("hi");
+      };
     });
     if(positionX){
       this.x = positionX;
@@ -171,6 +153,17 @@ window.onload = function(){
     }
   };
 
+  var collides = function(play,x,y,width,height){
+    if(play.x + play.velocityX + play.width >= x &&
+       play.x + play.velocityX <= x + width &&
+       play.y + play.velocityY + play.height >= y &&
+       play.y + play.velocityY <= y + height){
+      return true;
+    }
+    else{
+      return false;
+    }
+  };
   Player.prototype.interpretInputs = function(){
     for (var key in keysDown) {
       var value = Number(key);
@@ -250,6 +243,13 @@ window.onload = function(){
     render();
     animate(step);
   }
+
+  //handles animation of each frame
+  var animate = window.requestAnimationFrame ||
+    window.webkitRequestAnimationFrame ||
+    window.mozRequestAnimationFrame ||
+    function(callback) { window.setTimeout(callback, 1000/60) };
+
 
   //start the game loop
   animate(step);
