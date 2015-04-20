@@ -19,8 +19,8 @@ level1.layout = [[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
                 [1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1]];
 level1.rows = 10;
 level1.cols = 40;
-level1.spawnX = 20;
-level1.spawnY = 440;
+level1.spawnX = 20.0;
+level1.spawnY = 440.0;
 var level2;
 var level3;
 var level4;

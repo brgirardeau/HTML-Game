@@ -15,8 +15,10 @@ window.onload = function(){
   var colWidth = 50;
   var levelWidth = 2000;
 
-  var player = new Player(levels[currentLevel].spawnX, levels[currentLevel].spawnY);
+  var player = new Player(30, 60);
   var camera = new Camera();
+
+  var lastUpdateTime;
 
   function roundRect(x, y, width, height, radius, fill, stroke) {
     if (typeof stroke == "undefined" ) {
@@ -53,7 +55,7 @@ window.onload = function(){
   }
 
   Camera.prototype.update = function(char){
-    if(char.x >= this.width/2 - char.width/2 - char.maxSpeed && char.x <= this.width/2 - char.width/2 + char.maxSpeed){
+    if(char.x >= this.width/2 - char.width/2 - char.maxSpeedX && char.x <= this.width/2 - char.width/2 + char.maxSpeed){
       this.x += char.velocityX;
     }
     if(this.x < 0){
@@ -68,14 +70,20 @@ window.onload = function(){
     this.x = x;
     this.y = y;
     this.jumping = false;
+    this.moveRequest = false;
+    //optimal frame rate 60fps
+    this.mScale = 60;
     this.width = 30;
     this.height = 30;
-    this.maxSpeed = 7;
+    this.maxSpeedX = 5 * this.mScale;
+    this.maxSpeedY = 10 * this.mScale;
+    this.jumpStartSpeedY = 8 * this.mScale;
+    this.accelY = .5 * this.mScale;
     this.maxHeight = 6;
     this.velocityX = 0;
     this.velocityY = 0;
-    this.friction = .9;
-    this.gravity = .6;
+    this.accelX = .2 * this.mScale;
+    this.deccelX = .3 * this.mScale;
   }
 
   function Obstacle(x, y, width, height){
@@ -92,32 +100,62 @@ window.onload = function(){
 
   //update the state of the player
   Player.prototype.update = function(cam){
+    //slow down if nothing pressed during frame
+    this.moveRequest = false;
+
+    //current time
+    var now = new Date();
+    //number of miliseconds elapsed since Jan 1, 1970
+    var updateTick = now.getTime();
+
+    //update player position
+    var amountToMoveX = LinearMovement(this.velocityX, updateTick);
+    var amountToMoveY = LinearMovement(this.velocityY, updateTick);
+
+    this.x += amountToMoveX;
+    this.Y += amountToMoveY;
 
     //make player move based off of key strokes
     this.interpretInputs();
 
-    //cause player to skid to stop
-    this.velocityX *= this.friction;
+    //limit sideways acceleration of player
+    if(this.velocityX > this.maxSpeedX){
+      this.velocityX = this.maxSpeedX;
+    }
+    if(this.velocityX < -this.maxSpeedX){
+      this.velocityX = -this.maxSpeedX;
+    }
 
-    //implement gravity
-    this.velocityY += this.gravity;
+    //limit the upward accel of gravity
+    if(this.velocityY < -this.maxSpeedY){
+      this.velocityY = -this.maxSpeedY;
+    }
 
-    //console.log(this.velocityX);
+    //apply gravity
+    this.velocityY += this.accelY;
 
-    this.y += this.velocityY;
+    //slow down if nothing pressed
+    if(!this.moveRequest){
+      if(this.velocityX < 0){
+        this.velocityX += this.deccelX;
+      }
+      if(this.velocityX > 0){
+        this.velocityX -= this.deccelX;
+      }
+    }
 
-    //check collision with edges (this will go away when we
+    //check collision with edges (this might go away when we
     //properly do collisions
     //when the player is at the center of the screen and is moving right or left they should stay in the center of the screen
     //and the background should move with them.
     if(cam.x == 0){
       if(this.x + this.velocityX >= 0){
-        this.x += this.velocityX;
+      //  this.x += this.velocityX;
       }
     }
     if(cam.x == levels[currentLevel].cols * colWidth - cam.width){
       if(this.x + this.velocityX <= 1000 - this.width){
-        this.x += this.velocityX;
+      //  this.x += this.velocityX;
       }
     }
     if(this.x <= 0){
@@ -133,6 +171,20 @@ window.onload = function(){
     this.checkCollisions(objectsInLevel);
   };
 
+  /* Ideally this is called 60 times in one second, so each frame the
+    player will move 1/60 th of the velocity. If the player is lagging
+    it will take more than that amount of time and this will adjust
+    based off of seconds between when render is called and player
+    movement is processed */
+  function LinearMovement(pixelsPerSecond, tickCount){
+    if(!tickCount){
+      var date = new Date();
+      tickCount = date.getTime();
+    }
+    //elapsed time since render function called in seconds
+    var secsElapsed = (tickCount - lastUpdateTime) / 1000;
+    return secsElapsed * pixelsPerSecond;
+  }
   //check collisions with array of objects in the level and
   //adjust position accordingly
   Player.prototype.checkCollisions = function(objects){
@@ -145,14 +197,10 @@ window.onload = function(){
         console.log("hi");
       };
     });
-    if(positionX){
-      this.x = positionX;
-    }
-    if(positionY){
-      this.y = positionY;
-    }
   };
 
+  //check to see if player object collides with obstacle at x,y of size
+  //width height
   var collides = function(play,x,y,width,height){
     if(play.x + play.velocityX + play.width >= x &&
        play.x + play.velocityX <= x + width &&
@@ -164,26 +212,26 @@ window.onload = function(){
       return false;
     }
   };
+
+  //adjust velocity based off of keyboard inputs from human
   Player.prototype.interpretInputs = function(){
     for (var key in keysDown) {
       var value = Number(key);
       //left
       if (value == 37) {
-        if(this.velocityX > -this.maxSpeed){
-          this.velocityX -= 1;
-        }
+        this.velocityX -= this.accelX;
+        this.moveRequest = true;
       }
       //right
       else if (value == 39) {
-        if(this.velocityX < this.maxSpeed){
-          this.velocityX += 1;
-        }
+        this.velocityX += this.accelX;
+        this.moveRequest = true;
       }
       //up
       else if (value == 32) {
         if(!this.jumping){
           this.jumping = true;
-          this.velocityY = -this.maxHeight * 2;
+          this.velocityY = -this.jumpStartSpeedY;
         }
       }
     }
@@ -192,19 +240,19 @@ window.onload = function(){
   //draw the player to the canvas
   Player.prototype.render = function(){
     ctx.fillStyle = "#000000";
-    roundRect(this.x, this.y, this.width, this.height, 10, true, false);
-    ctx.fillStyle = "white";
-    roundRect(this.x + 2, this.y + 2, this.width - 4, this.height - 4, 10, true, false);
-    ctx.fillStyle = "#000000";
-    roundRect(this.x + 3, this.y + 3, this.width - 6, this.height - 6, 10, true, false);
+    ctx.fillRect(this.x, this.y, this.width, this.height);
+ //   roundRect(this.x, this.y, this.width, this.height, 10, true, false);
+ //   ctx.fillStyle = "white";
+ //   roundRect(this.x + 2, this.y + 2, this.width - 4, this.height - 4, 10, true, false);
+ //   ctx.fillStyle = "#000000";
+ //   roundRect(this.x + 3, this.y + 3, this.width - 6, this.height - 6, 10, true, false);
 
   };
 
-  /*TODO: this should really just be rendering objects instead of
-          actually filling in rects. Once we have our obstacle objects
-          up and running this should be calling the obstacle.prototype.render
-          method*/
 
+  //render all of the objects in the level by iterating
+  //through the array of objects in each level
+  //TODO: optimize by not drawing every object when not necessary?
   var renderLevel = function(levels, currentLevel){
     objectsInLevel = [];
     for(var i = 0; i < levels[currentLevel].layout.length; i++){
@@ -224,6 +272,12 @@ window.onload = function(){
 
   //draw everything to the canvas
   var render = function() {
+    //get the miliseconds every time the render function is called
+    //in order to be able to calculate lag -> decide how much player
+    //moves each frame
+    var date = new Date();
+    lastUpdateTime = date.getTime();
+
     //when the player is at the center of the screen and is moving right or left they should stay in the center of the screen
     //and the background should move with them.
     ctx.clearRect(0,0, canvas.width, canvas.height);
