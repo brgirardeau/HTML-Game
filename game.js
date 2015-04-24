@@ -15,7 +15,7 @@ window.onload = function(){
   var colWidth = 50;
   var levelWidth = 2000;
 
-  var player = new Player(30, 60);
+  var player = new Player(levels[currentLevel].spawnX, levels[currentLevel].spawnY);
   var camera = new Camera();
 
   var lastUpdateTime;
@@ -55,8 +55,13 @@ window.onload = function(){
   }
 
   Camera.prototype.update = function(char){
-    if(char.x >= this.width/2 - char.width/2 - char.maxSpeedX && char.x <= this.width/2 - char.width/2 + char.maxSpeed){
-      this.x += char.velocityX;
+    //current time
+    var now = new Date();
+    //number of miliseconds elapsed since Jan 1, 1970
+    var updateTick = now.getTime();
+    var vX = LinearMovement(char.velocityX, updateTick);
+    if(char.x + char.maxSpeedX/60 >= this.width/2 - char.width/2 && char.x - char.maxSpeedX/60 <= this.width/2 - char.width/2){
+      this.x += vX;
     }
     if(this.x < 0){
       this.x = 0;
@@ -75,15 +80,15 @@ window.onload = function(){
     this.mScale = 60;
     this.width = 30;
     this.height = 30;
-    this.maxSpeedX = 5 * this.mScale;
+    this.maxSpeedX = 8 * this.mScale;
     this.maxSpeedY = 10 * this.mScale;
     this.jumpStartSpeedY = 8 * this.mScale;
     this.accelY = .5 * this.mScale;
     this.maxHeight = 6;
     this.velocityX = 0;
     this.velocityY = 0;
-    this.accelX = .2 * this.mScale;
-    this.deccelX = .3 * this.mScale;
+    this.accelX = .6 * this.mScale;
+    this.deccelX = .4 * this.mScale;
   }
 
   function Obstacle(x, y, width, height){
@@ -111,9 +116,33 @@ window.onload = function(){
     //update player position
     var amountToMoveX = LinearMovement(this.velocityX, updateTick);
     var amountToMoveY = LinearMovement(this.velocityY, updateTick);
+   /*
+    if(this.x){
+      this.x += amountToMoveX;
+    }
+    else {
+      this.x = levels[currentLevel].spawnX;
+    }
+    */
+    //when the player is at the center of the screen and is moving right or left they should stay in the center of the screen
+    //and the background should move with them.
+    if(cam.x == 0){
+      if(this.x + amountToMoveX >= 0){
+        this.x += amountToMoveX;
+      }
+    }
+    if(cam.x == levels[currentLevel].cols * colWidth - cam.width){
+      if(this.x + amountToMoveX <= levels[currentLevel].cols * colWidth - this.width){
+        this.x += amountToMoveX;
+      }
+    }
 
-    this.x += amountToMoveX;
-    this.Y += amountToMoveY;
+    if(this.y){
+      this.y += amountToMoveY;
+    }
+    else {
+      this.y = levels[currentLevel].spawnY;
+    }
 
     //make player move based off of key strokes
     this.interpretInputs();
@@ -142,22 +171,11 @@ window.onload = function(){
       if(this.velocityX > 0){
         this.velocityX -= this.deccelX;
       }
+      if(this.velocityX > 0 && this.velocityX < this.deccelX) this.velocityX = 0;
+      if(this.velocityY < 0 && this.velocityX > -this.deccelX) this.velocityX = 0;
     }
 
-    //check collision with edges (this might go away when we
-    //properly do collisions
-    //when the player is at the center of the screen and is moving right or left they should stay in the center of the screen
-    //and the background should move with them.
-    if(cam.x == 0){
-      if(this.x + this.velocityX >= 0){
-      //  this.x += this.velocityX;
-      }
-    }
-    if(cam.x == levels[currentLevel].cols * colWidth - cam.width){
-      if(this.x + this.velocityX <= 1000 - this.width){
-      //  this.x += this.velocityX;
-      }
-    }
+    //DELETE LATER
     if(this.x <= 0){
       this.x = 0;
     }
@@ -168,6 +186,7 @@ window.onload = function(){
       this.y = height - this.height;
       this.jumping = false;
     }
+    //END DELETE
     this.checkCollisions(objectsInLevel);
   };
 
