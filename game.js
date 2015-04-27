@@ -61,7 +61,7 @@ window.onload = function(){
     var updateTick = now.getTime();
     var vX = LinearMovement(char.velocityX, updateTick);
     if(char.x + char.maxSpeedX/60 >= this.width/2 - char.width/2 && char.x - char.maxSpeedX/60 <= this.width/2 - char.width/2){
-      this.x += vX;
+      this.x += char.velocityX / 60;
     }
     if(this.x < 0){
       this.x = 0;
@@ -76,10 +76,11 @@ window.onload = function(){
     this.y = y;
     this.jumping = false;
     this.moveRequest = false;
+    this.grounded = false;
     //optimal frame rate 60fps
     this.mScale = 60;
-    this.width = 30;
-    this.height = 30;
+    this.width = 15;
+    this.height = 15;
     this.maxSpeedX = 8 * this.mScale;
     this.maxSpeedY = 10 * this.mScale;
     this.jumpStartSpeedY = 8 * this.mScale;
@@ -87,8 +88,8 @@ window.onload = function(){
     this.maxHeight = 6;
     this.velocityX = 0;
     this.velocityY = 0;
-    this.accelX = .6 * this.mScale;
-    this.deccelX = .4 * this.mScale;
+    this.accelX = .9 * this.mScale;
+    this.deccelX = .9 * this.mScale;
   }
 
   function Obstacle(x, y, width, height){
@@ -116,7 +117,8 @@ window.onload = function(){
     //update player position
     var amountToMoveX = LinearMovement(this.velocityX, updateTick);
     var amountToMoveY = LinearMovement(this.velocityY, updateTick);
-   /*
+
+    /*
     if(this.x){
       this.x += amountToMoveX;
     }
@@ -126,12 +128,12 @@ window.onload = function(){
     */
     //when the player is at the center of the screen and is moving right or left they should stay in the center of the screen
     //and the background should move with them.
-    if(cam.x == 0){
+    if(cam.x === 0){
       if(this.x + amountToMoveX >= 0){
         this.x += amountToMoveX;
       }
     }
-    if(cam.x == levels[currentLevel].cols * colWidth - cam.width){
+    if(cam.x === levels[currentLevel].cols * colWidth - cam.width){
       if(this.x + amountToMoveX <= levels[currentLevel].cols * colWidth - this.width){
         this.x += amountToMoveX;
       }
@@ -143,7 +145,6 @@ window.onload = function(){
     else {
       this.y = levels[currentLevel].spawnY;
     }
-
     //make player move based off of key strokes
     this.interpretInputs();
 
@@ -172,10 +173,10 @@ window.onload = function(){
         this.velocityX -= this.deccelX;
       }
       if(this.velocityX > 0 && this.velocityX < this.deccelX) this.velocityX = 0;
-      if(this.velocityY < 0 && this.velocityX > -this.deccelX) this.velocityX = 0;
+      if(this.velocityX < 0 && this.velocityX > -this.deccelX) this.velocityX = 0;
     }
 
-    //DELETE LATER
+    /*DELETE LATER
     if(this.x <= 0){
       this.x = 0;
     }
@@ -186,7 +187,7 @@ window.onload = function(){
       this.y = height - this.height;
       this.jumping = false;
     }
-    //END DELETE
+    *///END DELETE
     this.checkCollisions(objectsInLevel);
   };
 
@@ -210,29 +211,63 @@ window.onload = function(){
     var play = this;
     var positionX;
     var positionY;
+    play.grounded = false;
     objects.forEach(function(obj){
       //is colliding if true
-      if(collides(play, obj.x, obj.y, obj.width, obj.height)){
-        console.log("hi");
-      };
+      var dir = collides(play, obj.x, obj.y, obj.width, obj.height);
+      if(dir === "l" || dir === "r"){
+        play.velocityX = 0;
+        play.jumping = false;
+      }
+      else if(dir === "b"){
+        play.grounded = true;
+        play.jumping = false;
+      }
+      else if(dir === "t"){
+        play.velocityY *= -1;
+      }
     });
+    if(play.grounded){
+      play.velocityY = 0;
+    }
   };
 
   //check to see if player object collides with obstacle at x,y of size
   //width height
   var collides = function(play,x,y,width,height){
-    if(play.x + play.velocityX + play.width >= x &&
-       play.x + play.velocityX <= x + width &&
-       play.y + play.velocityY + play.height >= y &&
-       play.y + play.velocityY <= y + height){
-      return true;
-    }
-    else{
-      return false;
-    }
-  };
+    var vX = (play.x + (play.width/2)) - (x + width/2);
+    var vY = (play.y + (play.height/2)) - (y + height/2);
+    var hWidths = (play.width/2) + (width/2);
+    var hHeights = (play.height/2) + (height/2);
+    var colDir = null;
+    if(Math.abs(vX) < hWidths && Math.abs(vY) < hHeights){
+      var oX = hWidths - Math.abs(vX);
+      var oY = hHeights - Math.abs(vY);
+      if(oX >= oY){
+        if(vY > 0){
+          colDir = "t";
+          play.y += oY;
+        }
+        else {
+          colDir = "b";
+          play.y -= oY;
+        }
+      }
+      else {
+        if(vX > 0){
+          colDir = "l";
+          play.x += oX;
+        }
+        else{
+          colDir = "r";
+          play.x -= oX;
+        }
+      }
 
-  //adjust velocity based off of keyboard inputs from human
+    }
+    return colDir;
+  };
+    //adjust velocity based off of keyboard inputs from human
   Player.prototype.interpretInputs = function(){
     for (var key in keysDown) {
       var value = Number(key);
@@ -248,8 +283,9 @@ window.onload = function(){
       }
       //up
       else if (value == 32) {
-        if(!this.jumping){
+        if(!this.jumping && this.grounded){
           this.jumping = true;
+          this.grounded = false;
           this.velocityY = -this.jumpStartSpeedY;
         }
       }
