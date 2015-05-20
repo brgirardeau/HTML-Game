@@ -18,6 +18,8 @@ window.onload = function(){
   var player = new Player(levels[currentLevel].spawnX, levels[currentLevel].spawnY);
   var camera = new Camera();
 
+  var paused = false;
+
   var lastUpdateTime;
 
   function roundRect(x, y, width, height, radius, fill, stroke) {
@@ -81,14 +83,14 @@ window.onload = function(){
     this.mScale = 60;
     this.width = 15;
     this.height = 15;
-    this.maxSpeedX = 8 * this.mScale;
+    this.maxSpeedX = 6 * this.mScale;
     this.maxSpeedY = 10 * this.mScale;
     this.jumpStartSpeedY = 8 * this.mScale;
     this.accelY = .5 * this.mScale;
     this.maxHeight = 6;
     this.velocityX = 0;
     this.velocityY = 0;
-    this.accelX = .9 * this.mScale;
+    this.accelX = .7 * this.mScale;
     this.deccelX = .9 * this.mScale;
   }
 
@@ -134,6 +136,7 @@ window.onload = function(){
       }
     }
     if(cam.x === levels[currentLevel].cols * colWidth - cam.width){
+      console.log("could this be the problem?");
       if(this.x + amountToMoveX <= levels[currentLevel].cols * colWidth - this.width){
         this.x += amountToMoveX;
       }
@@ -256,11 +259,21 @@ window.onload = function(){
       else {
         if(vX > 0){
           colDir = "l";
-          play.x += oX;
+          if(camera.x === 0 || camera.x === levels[currentLevel].cols * colWidth - camera.width){
+            play.x += oX + .05;
+          }
+          else {
+            camera.x += oX + .05;
+          }
         }
         else{
           colDir = "r";
-          play.x -= oX;
+          if(camera.x === 0 || camera.x === levels[currentLevel].cols * colWidth - camera.width){
+            play.x = play.x - oX - .05;
+          }
+          else {
+            camera.x = camera.x - oX - .05;
+          }
         }
       }
 
@@ -271,6 +284,11 @@ window.onload = function(){
   Player.prototype.interpretInputs = function(){
     for (var key in keysDown) {
       var value = Number(key);
+      //P - PAUSE/UNPAUSE
+      if (value == 80){
+        paused = true;
+      }
+
       //left
       if (value == 37) {
         this.velocityX -= this.accelX;
@@ -363,8 +381,19 @@ window.onload = function(){
   //start the game loop
   animate(step);
 
+
+
   window.addEventListener("keydown", function (event) {
     keysDown[event.keyCode] = true;
+    //P
+    if(event.keyCode == 80){
+      if(paused == true){
+        paused = false;
+      }
+      else {
+        paused = true;
+      }
+    }
   });
 
   window.addEventListener("keyup", function (event) {
